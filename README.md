@@ -6,7 +6,7 @@ Androidカメラ越しの床・地面に、実世界スケールのグリッド�
 
 - Android native: Kotlin + Jetpack Compose
 - AR: Google ARCore
-- Rendering adapter: SceneView 4.36.0 (ARCore + Filament)
+- Rendering adapter: SceneView 4.35.0 (ARCore + Filament)
 - 水平面をタップして4 m × 4 mグリッドを配置
 - 小グリッド: 10 cm
 - 主線: 1 m
