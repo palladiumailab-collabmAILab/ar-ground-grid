@@ -10,6 +10,7 @@ jobs:
     timeout-minutes: 30
     env:
       AVD_NAME: ar-ground-grid-ci
+      ANDROID_AVD_HOME: ${{ runner.temp }}/android-avd
       APP_ID: com.palladiumailab.argroundgrid
       ARCORE_URL: https://github.com/google-ar/arcore-android-sdk/releases/download/1.54.0/Google_Play_Services_for_AR_1.54.0_x86_for_emulator.apk
       ARCORE_SHA256: 311053605c873be5022a01a96566c9cae2fbcdcce3fc81fa56697d089cac70b6
@@ -45,14 +46,19 @@ jobs:
 
       - name: Create AR-capable AVD
         run: |
-          echo no | avdmanager create avd \
+          mkdir -p "$ANDROID_AVD_HOME"
+          AVD_DIR="$ANDROID_AVD_HOME/$AVD_NAME.avd"
+          printf 'no\n' | avdmanager create avd \
             --force \
             --name "$AVD_NAME" \
-            --package "system-images;android-35;google_apis;x86_64"
+            --package "system-images;android-35;google_apis;x86_64" \
+            --path "$AVD_DIR"
+          test -f "$AVD_DIR/config.ini"
           {
             echo "hw.camera.back=virtualscene"
             echo "hw.camera.front=emulated"
-          } >> "$HOME/.android/avd/$AVD_NAME.avd/config.ini"
+          } >> "$AVD_DIR/config.ini"
+          avdmanager list avd
 
       - name: Boot emulator
         run: |
