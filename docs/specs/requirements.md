@@ -42,7 +42,7 @@
 
 | ID | Requirement | Target |
 |---|---|---|
-| NFR-001 | Android要件 | minSdk 24、compile/target SDK 36 |
+| NFR-001 | Android要件 | minSdk 24、compileSdk 37、targetSdk 36 |
 | NFR-002 | アーキテクチャ | グリッド幾何計算はAndroid/ARCore非依存のKotlinコードに分離する |
 | NFR-003 | テスト | グリッド本数、座標、主線判定をJVM単体テストで検証する |
 | NFR-004 | CI | pull request / main pushでunit testとAndroid debug buildを実行する |
