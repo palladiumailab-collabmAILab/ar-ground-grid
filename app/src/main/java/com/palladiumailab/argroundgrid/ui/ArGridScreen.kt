@@ -100,13 +100,23 @@ private fun ArGridContent() {
                 latestFrame.set(null)
                 trackingLabel = "ARを開始できません: ${exception.javaClass.simpleName}"
             },
-            onSessionUpdated = { _, frame ->
+            onSessionUpdated = { session, frame ->
                 latestFrame.set(frame)
                 val nextLabel = when (frame.camera.trackingState) {
-                    TrackingState.TRACKING -> if (anchor == null) {
-                        "床をタップしてグリッドを配置"
-                    } else {
+                    TrackingState.TRACKING -> if (anchor != null) {
                         "配置済み • 10 cm grid / 1 m major"
+                    } else {
+                        val hasHorizontalPlane = session
+                            .getAllTrackables(Plane::class.java)
+                            .any { plane ->
+                                plane.trackingState == TrackingState.TRACKING &&
+                                    plane.type == Plane.Type.HORIZONTAL_UPWARD_FACING
+                            }
+                        if (hasHorizontalPlane) {
+                            "床をタップしてグリッドを配置"
+                        } else {
+                            "床を探しています"
+                        }
                     }
                     TrackingState.PAUSED -> "追跡待機中: ${frame.camera.trackingFailureReason}"
                     TrackingState.STOPPED -> "AR追跡停止"
