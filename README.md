@@ -25,7 +25,7 @@ Androidカメラ越しの床・地面に、実世界スケールのグリッド�
 
 ## Build
 
-Android Studioでプロジェクトを開くか、Dockerで再現可能なビルドを実行する。
+Android Studioでプロジェクトを開くか、Dockerで再現可能な品質ゲートを実行する。
 
 ```bash
 docker build -t ar-ground-grid .
@@ -35,7 +35,7 @@ docker run --rm -v "$PWD:/workspace" -w /workspace ar-ground-grid
 Dockerを使わない場合は JDK 17+、Android SDK 37、Gradle 9.5.0 が必要。
 
 ```bash
-gradle --no-daemon testDebugUnitTest assembleDebug
+gradle --no-daemon lintDebug testDebugUnitTest assembleDebug
 ```
 
 ## Device requirements
@@ -50,4 +50,4 @@ AR Requiredアプリのため、ARCore対応Android端末とGoogle Play Services
 
 ## Harness
 
-`codex-dev-harness` の共通開発原則を適用する。GitHub ActionsでJVM単体テストとdebug buildを実行する。
+`codex-dev-harness` の共通開発原則を適用する。GitHub ActionsとDockerでAndroid Lint、JVM単体テスト、debug buildを同じGradleコマンドで実行する。
