@@ -1,0 +1,7 @@
+trial_id,reference_length_m,observed_ar_length_m,absolute_error_m,relative_error_pct,device_model,android_version,tracking_state,plane_tracking_state,condition,failure_reason,notes
+baseline-001,1.0,,,,,,,,baseline,,
+baseline-002,1.0,,,,,,,,baseline,,
+baseline-003,1.0,,,,,,,,baseline,,
+baseline-004,3.0,,,,,,,,baseline,,
+baseline-005,3.0,,,,,,,,baseline,,
+baseline-006,3.0,,,,,,,,baseline,,
