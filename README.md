@@ -32,7 +32,7 @@ docker build -t ar-ground-grid .
 docker run --rm -v "$PWD:/workspace" -w /workspace ar-ground-grid
 ```
 
-Dockerを使わない場合は JDK 17+、Android SDK 36、Gradle 9.5.0 が必要。
+Dockerを使わない場合は JDK 17+、Android SDK 37、Gradle 9.5.0 が必要。
 
 ```bash
 gradle --no-daemon testDebugUnitTest assembleDebug
@@ -40,7 +40,7 @@ gradle --no-daemon testDebugUnitTest assembleDebug
 
 ## Device requirements
 
-AR Requiredアプリのため、ARCore対応Android端末とGoogle Play Services for ARが必要。`minSdk = 24`。
+AR Requiredアプリのため、ARCore対応Android端末とGoogle Play Services for ARが必要。`minSdk = 24`。`compileSdk = 37`、`targetSdk = 36`。
 
 ## Current phase
 
