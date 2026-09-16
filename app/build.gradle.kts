@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.palladiumailab.argroundgrid"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.palladiumailab.argroundgrid"
