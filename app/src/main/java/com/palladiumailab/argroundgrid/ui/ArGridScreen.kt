@@ -96,6 +96,10 @@ private fun ArGridContent() {
             sessionConfiguration = { _, config ->
                 config.planeFindingMode = Config.PlaneFindingMode.HORIZONTAL
             },
+            onSessionFailed = { exception ->
+                latestFrame.set(null)
+                trackingLabel = "ARを開始できません: ${exception.javaClass.simpleName}"
+            },
             onSessionUpdated = { _, frame ->
                 latestFrame.set(frame)
                 val nextLabel = when (frame.camera.trackingState) {
