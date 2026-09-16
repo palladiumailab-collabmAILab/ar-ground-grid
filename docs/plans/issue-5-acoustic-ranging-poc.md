@@ -1,102 +1,112 @@
 # Issue #5 implementation plan: Android acoustic ranging PoC
 
+## Status
+
+**Conditional / blocked.**
+
+このPoCはAR Ground Grid MVPの前提条件ではない。#7 のARCore実機評価で、追加のmetric anchorが必要と判断された場合のみ実装を開始する。
+
+Dependencies:
+
+- Parent: #1
+- Existing Android MVP: #2
+- ARCore validation: #7
+- Research: #5
+
 ## Goal
 
-Validate whether a commodity Android phone can estimate distance to a passive wall or other reflective surface using only its speaker and microphone, well enough to serve as a metric-scale aid for the AR ground-grid concept.
+一般的なAndroidスマホのspeaker + microphoneだけで、外部タグなしに壁等のpassive surfaceまでの距離を推定できるかを検証する。
 
-This plan implements the Phase 1 PoC described in #5. It does **not** implement ARCore integration, generic two-point length measurement, UWB/Bluetooth/Wi-Fi ranging, or product UI.
+成立した場合でも、このPoC単独で任意2点間の長さを測ることは目的としない。ARCoreへのscale correction / sensor fusionは別Issueで扱う。
+
+## Activation condition
+
+以下のいずれかを #7 の実測で確認した場合に限り開始する。
+
+- ARCoreのworld scaleに用途上無視できない系統誤差がある
+- tracking quality gateだけでは不足する
+- 外部デバイスなしの独立した実距離anchorを比較対象として必要とする
+
+#7でARCore単体が用途上十分なら、このPoCは実装しない。
 
 ## Acceptance criteria
 
-The PoC is considered technically promising only when measured on real Android hardware and all of the following hold:
+実Android端末で以下を満たした場合のみ技術的に有望と判断する。
 
-- measurement range: 0.3-3.0 m
-- no external responder/tag/device
-- P90 absolute distance error <= 5 cm over the defined baseline test set
-- repeated static measurements are recorded so variance can be quantified
-- failures are observable rather than silently converted into a distance
+- range: 0.3–3.0 m
+- external responder / tagなし
+- P90 absolute error <= 5 cm
+- repeated static measurementsから分散を算出できる
+- 推定不能を誤った距離へ丸めず、failureとして観測できる
 
-A desktop/JVM unit test or Android emulator result cannot satisfy the real-device accuracy criterion.
+CIやemulatorの結果だけでは精度条件を満たしたことにしない。
 
 ## Baseline design
 
 ### Signal
 
-Start with one deliberately narrow baseline:
+最初は1方式に限定する。
 
 - sample rate: 48 kHz
-- linear chirp: 8-16 kHz
-- short transmit/listen cycle rather than continuous application-level ranging
-- PCM 16-bit mono unless device capability requires a different supported format
+- linear chirp: 8–16 kHz
+- PCM 16-bit monoを第一候補
+- one-shot transmit / record
 
-Near-ultrasonic 15-20 kHz and 96 kHz sampling remain experiments, not baseline requirements. They should be added only if the baseline cannot reach the acceptance criteria or audible UX becomes a blocking concern.
+15–20 kHz、96 kHz、複雑なFMCW/phase processingはbaseline失敗後の候補とする。
 
-### Ranging algorithm
+### Algorithm
 
-Use matched filtering / cross-correlation first because #5 explicitly allows it and it is the smallest algorithm that can validate the core hypothesis.
+1. deterministic chirpを生成
+2. `AudioTrack`で再生
+3. `AudioRecord`で録音
+4. matched filter / cross-correlation
+5. direct-path/reference peakを特定
+6. 0.3–3.0 m相当のlag範囲からreflection peakを探索
+7. `distance = delta_t * sound_speed / 2` で距離化
+8. distance + diagnostics、または明示的failureを返す
 
-Pipeline:
+baseline計測前にbeamforming、learned peak classification、native DSP、独自SLAM等を追加しない。
 
-1. generate a deterministic chirp
-2. play it with `AudioTrack`
-3. record synchronously with `AudioRecord`
-4. correlate the recording with the transmitted chirp
-5. identify the direct-path/reference peak
-6. search for a plausible later reflection peak inside the 0.3-3.0 m window
-7. convert peak separation to distance with `distance = delta_t * sound_speed / 2`
-8. return either a measurement plus diagnostics or an explicit failure reason
+## Integration with existing app
 
-Do not add FMCW dechirping, phase-based displacement estimation, beamforming, SLAM, or learned peak classification before the baseline is measured and shown insufficient.
+#2 のAndroid project / Gradle / GitHub Actionsを再利用する。新しいAndroid skeleton、別build system、別CIは作らない。
 
-## Minimal architecture
-
-Keep Android I/O separate from signal processing so the latter is deterministic and unit-testable.
+追加責務だけを分離する。
 
 ```text
 app/
   audio/
-    AudioDuplexEngine      # AudioTrack/AudioRecord only
-    AudioCapabilityProbe   # supported rates/sources/effects
+    AudioDuplexEngine
+    AudioCapabilityProbe
   ranging/
-    ChirpGenerator         # pure Kotlin
-    CrossCorrelator        # pure Kotlin
-    PeakDetector           # pure Kotlin
-    RangeEstimator         # pure Kotlin, no Android dependency
-    RangingResult          # measurement or explicit failure
+    ChirpGenerator
+    CrossCorrelator
+    PeakDetector
+    RangeEstimator
+    RangingResult
   measurement/
-    MeasurementRunner      # orchestrates one measurement cycle
-    MeasurementRecord      # expected distance + result + diagnostics
-  ui/
-    MainActivity           # start/stop, current result, failure state
+    MeasurementRunner
+    MeasurementRecord
 ```
 
-No repository/service/DI framework is introduced for the PoC. Constructors and interfaces are sufficient unless a concrete testing problem appears.
+- DSPはAndroid API非依存のpure Kotlinにする
+- `AudioTrack` / `AudioRecord`はaudio層に閉じ込める
+- DI framework、repository/service層、native/C++は導入しない
+- 既存AR画面との融合はこのPoCでは行わない
 
-## Device-audio handling
+## Device diagnostics
 
-The implementation must record the actual conditions under which each measurement ran:
+各測定で最低限記録する。
 
-- requested and actual sample rate
-- audio source used
-- whether AGC/noise suppression/acoustic echo cancellation appear available/enabled
-- input/output route where Android exposes it
-- device model and Android version
+- requested / actual sample rate
+- audio source
+- AGC / noise suppression / AECの利用可否・状態（取得可能な範囲）
+- device model / Android version
+- expected distance
+- estimated distance または failure reason
+- peak lag / score等の診断値
 
-Prefer the least-processed capture path supported by the device. Do not assume preprocessing can always be disabled; unsupported combinations must be reported in diagnostics.
-
-## Measurement data
-
-For each run, persist/export a compact record sufficient to reproduce the aggregate metrics:
-
-- timestamp
-- expected distance in metres
-- estimated distance or failure reason
-- absolute error when an estimate exists
-- peak lag / peak score or equivalent confidence diagnostic
-- device/audio configuration
-- optional environment labels entered by the tester: surface, angle, noise, orientation
-
-Raw PCM capture is optional behind a debug-only switch. It should not be required for normal measurement runs because it increases storage and handling complexity.
+raw PCM保存はdebug用途の任意機能とし、通常測定の必須条件にしない。
 
 ## Evaluation protocol
 
@@ -108,113 +118,78 @@ Baseline distances:
 - 2.0 m
 - 3.0 m
 
-At each distance, collect enough repeated samples to compute at least:
+最初は1つの平坦で反射性の高い壁、固定端末姿勢で測る。
 
-- mean absolute error
+算出:
+
+- MAE
 - P50 absolute error
 - P90 absolute error
 - max absolute error
 - failure rate
-- standard deviation for static repeated measurements
+- static repeated measurementのstandard deviation
 
-The first acceptance run should use one flat, acoustically reflective wall and a fixed phone orientation. Material, angle, noise, orientation, alternative speaker/microphone paths, 96 kHz, and near-ultrasonic bands are follow-up matrices after the baseline works.
-
-## Validation strategy
-
-### Unit tests
-
-Pure-Kotlin tests cover:
-
-- chirp length and frequency sweep bounds
-- correlation peak location for synthetic delayed signals
-- distance conversion from sample lag
-- rejection outside the allowed 0.3-3.0 m window
-- peak detector behaviour for no-echo / ambiguous-echo fixtures
-
-Synthetic fixtures should include additive noise and at least one competing reflection, but should remain small and deterministic.
-
-### Android tests / manual checks
-
-- app builds and starts on a physical Android device
-- microphone permission failure is explicit
-- unsupported audio configuration is explicit
-- one measurement cycle terminates and produces result/diagnostics
-- repeated measurements do not leak or leave playback/recording active
-
-### CI
-
-Because executable Android code enters the repository in the implementation PR, add GitHub Actions for the checks that do not require hardware:
-
-- Gradle build
-- JVM unit tests
-- Android lint
-
-Do not claim the acoustic accuracy criterion from CI; it requires real-device measurements.
+材質、角度、騒音、端末姿勢、near-ultrasonic、96 kHzはbaseline成立後の追加実験とする。
 
 ## Implementation sequence
 
-### Slice 1 — project skeleton and deterministic DSP
+### Slice 1 — deterministic DSP
 
-- create minimal Android project
-- add Gradle wrapper and CI
-- implement `ChirpGenerator`, `CrossCorrelator`, `PeakDetector`, `RangeEstimator`
-- add synthetic unit tests
+- `ChirpGenerator`
+- `CrossCorrelator`
+- `PeakDetector`
+- `RangeEstimator`
+- synthetic delayed-signal unit tests
 
-Exit: DSP pipeline can recover known synthetic delays and the Android project builds in CI.
+Exit: known delayをpure Kotlin testで復元でき、既存CIが通る。
 
-### Slice 2 — real audio I/O
+### Slice 2 — Android audio I/O
 
-- implement `AudioDuplexEngine`
-- add permission/capability handling
-- connect one-shot playback/recording to `MeasurementRunner`
-- expose diagnostics and explicit failure states
+- microphone permission
+- `AudioDuplexEngine`
+- unsupported audio configurationの明示
+- one-shot measurement
+- result / diagnostics表示
 
-Exit: physical device can run one measurement cycle without ARCore or other sensors.
+Exit: 実機で1回の測定cycleを完了できる。
 
-### Slice 3 — measurement logging and evaluation
+### Slice 3 — measurement log / evaluation
 
-- add expected-distance entry
-- record/export compact measurement rows
-- compute MAE/P50/P90/max/failure rate/stddev from recorded runs
-- document the baseline real-device procedure
+- expected distance入力
+- compact record export
+- MAE / P50 / P90 / max / failure rate / stddev算出
+- baseline procedure文書化
 
-Exit: the Issue #5 Go/No-Go metric can be calculated from captured data.
+Exit: Go/No-Goを実測値で判断できる。
 
-### Slice 4 — only if baseline misses the criterion
+### Slice 4 — evidence-backed refinement only
 
-Use captured evidence to choose one next experiment at a time, for example:
+P90 <= 5 cmを満たさない場合だけ、実測原因に対応する1実験ずつを追加する。
 
-- alternate chirp band or duration
-- 96 kHz where supported
-- audio preprocessing changes
-- improved direct-path cancellation / echo peak selection
-- FMCW dechirp
+候補:
 
-Do not implement all candidates pre-emptively.
+- chirp band / duration変更
+- audio preprocessing条件変更
+- direct-path cancellation / peak selection改善
+- 96 kHz（対応端末のみ）
+- FMCW dechirp / phase processing
 
 ## Non-goals
 
-- ARCore scale correction or sensor fusion
 - arbitrary two-point length measurement
+- ARCore fusion / scale correction
 - room mapping
-- multi-surface semantic selection
-- UWB, Bluetooth Channel Sounding, Wi-Fi RTT, BLE RSSI, GNSS, barometer
-- production UI, analytics, cloud backend, accounts, database
-- custom native/C++ DSP before Kotlin performance is shown insufficient
-- third-party DSP dependency unless the baseline needs functionality that is costly or risky to maintain in-house
+- UWB / Bluetooth Channel Sounding / Wi-Fi RTT / BLE / GNSS / barometer実装
+- cloud backend / account / database
+- production analytics
+- custom native/C++ DSP before Kotlin performance is proven insufficient
 
-## Done definition for Issue #5 PoC implementation
+## Done
 
-Implementation work following this plan is complete when:
-
-- the Android app builds through the repository CI gate
-- deterministic DSP tests pass
-- a physical phone can execute and log measurements
-- baseline measurements cover 0.3/0.5/1/2/3 m
-- MAE, P50, P90, max error, failure rate, and static variance are reported
-- the P90 <= 5 cm Go/No-Go criterion is explicitly evaluated
-- limitations and the next decision are recorded in `docs/decisions.md`
-
-## Follow-up decision
-
-If the criterion passes, create a separate issue for evaluating acoustic distance as an ARCore scale anchor. If it fails, keep Issue #5 scoped to the measured acoustic failure and open only the smallest evidence-backed follow-up experiment.
+- [ ] existing Android app / CIを再利用してbuildできる
+- [ ] deterministic DSP testsが通る
+- [ ] physical deviceで測定とfailure diagnosticsを記録できる
+- [ ] 0.3 / 0.5 / 1 / 2 / 3 mのbaseline dataがある
+- [ ] MAE / P50 / P90 / max / failure rate / stddevを報告する
+- [ ] P90 <= 5 cmを明示的に判定する
+- [ ] 結果と次の判断を`docs/decisions.md`へ記録する
