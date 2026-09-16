@@ -17,3 +17,10 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Lint, unit test, and debug build
         run: ./gradlew --no-daemon lintDebug testDebugUnitTest assembleDebug
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: ar-ground-grid-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 7
