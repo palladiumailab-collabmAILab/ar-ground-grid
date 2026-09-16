@@ -42,7 +42,9 @@ docker build -t ar-ground-grid .
 docker run --rm -v "$PWD:/workspace" -w /workspace ar-ground-grid
 ```
 
-## BlueStacks smoke test
+## Emulator validation
+
+### BlueStacks smoke test
 
 BlueStacks 5では、実寸精度ではなくAndroidアプリとしての起動・権限処理・AR初期化失敗時の生存性をADBで確認する。
 
@@ -75,7 +77,18 @@ powershell -ExecutionPolicy Bypass -File scripts\bluestacks-smoke.ps1 -ApkPath C
 - CAMERA付与後もprocessが生存すること
 - AR開始状態、またはAR初期化失敗が画面上で確認可能であること
 
-BlueStacksをARCore精度評価には使用しない。平面検出、Anchorの実世界固定、1 m / 3 mの実寸精度、driftは実Android端末で#7を実施する。
+### Official Android Emulator
+
+ARCoreの仮想環境評価はGoogleがサポートするAndroid Emulator + VirtualSceneを使用する。検証時はGoogle公式のGoogle Play Services for AR x86 emulator APKをchecksum検証してインストールする。
+
+確認対象:
+
+- ARCore session開始
+- tracking開始
+- horizontal plane検出
+- scripted tapによるgrid placement（VirtualScene上でhitした場合）
+
+BlueStacksまたはVirtualSceneを実寸精度の根拠には使わない。Anchorの実世界固定、1 m / 3 mの実寸精度、driftは実Android端末で#7を実施する。
 
 ## Device validation
 
