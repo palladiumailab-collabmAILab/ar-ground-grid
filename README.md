@@ -20,6 +20,7 @@ Androidカメラ越しの床・地面に、実世界スケールのグリッド�
 - `docs/specs/` — 現行仕様の正本
 - `docs/reference/` — 技術リファレンス
 - `docs/roadmap.md` — 実装順序・decision gate
+- `docs/evaluation/` — 実機評価手順・記録テンプレート
 - `docs/decisions.md` — 設計判断
 
 将来のiPhone対応では、グリッド仕様・幾何を維持し、AR層をARKit/RealityKit側へ置き換える。
@@ -40,6 +41,12 @@ Dockerでも同じ品質ゲートを使う。
 docker build -t ar-ground-grid .
 docker run --rm -v "$PWD:/workspace" -w /workspace ar-ground-grid
 ```
+
+## Device validation
+
+GitHub Actions成功時にdebug APKを`ar-ground-grid-debug-apk` artifactとして7日間保持する。実機評価ではこのAPKまたはローカルbuildの`app-debug.apk`を使用する。
+
+評価手順とtrial-level data schemaは`docs/evaluation/`を参照する。
 
 ## Device requirements
 
