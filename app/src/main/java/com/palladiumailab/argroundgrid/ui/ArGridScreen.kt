@@ -35,9 +35,11 @@ import com.palladiumailab.argroundgrid.grid.GridGeometry
 import io.github.sceneview.ar.ARSceneView
 import io.github.sceneview.ar.node.AnchorNode
 import io.github.sceneview.math.Position
-import io.github.sceneview.node.TubeNode
+import io.github.sceneview.math.Size
+import io.github.sceneview.node.CubeNode
 import io.github.sceneview.rememberOnGestureListener
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.math.abs
 
 @Composable
 fun ArGridScreen() {
@@ -131,14 +133,19 @@ private fun ArGridContent() {
             anchor?.let { placedAnchor ->
                 AnchorNode(anchor = placedAnchor) {
                     gridLines.forEach { line ->
-                        TubeNode(
-                            points = listOf(
-                                Position(line.startX, 0.004f, line.startZ),
-                                Position(line.endX, 0.004f, line.endZ),
-                            ),
-                            radius = if (line.isMajor) 0.006f else 0.003f,
-                            radialSegments = 4,
-                            caps = false,
+                        val lineWidth = if (line.isMajor) 0.012f else 0.006f
+                        val lengthX = abs(line.endX - line.startX)
+                        val lengthZ = abs(line.endZ - line.startZ)
+                        val centerX = (line.startX + line.endX) / 2f
+                        val centerZ = (line.startZ + line.endZ) / 2f
+
+                        CubeNode(
+                            size = if (lengthX > 0f) {
+                                Size(lengthX, 0.004f, lineWidth)
+                            } else {
+                                Size(lineWidth, 0.004f, lengthZ)
+                            },
+                            position = Position(centerX, 0.004f, centerZ),
                             materialInstance = if (line.isMajor) majorMaterial else minorMaterial,
                         )
                     }
