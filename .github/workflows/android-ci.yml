@@ -17,5 +17,5 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.5.0'
-      - name: Unit test and debug build
-        run: gradle --no-daemon testDebugUnitTest assembleDebug
+      - name: Lint, unit test, and debug build
+        run: gradle --no-daemon lintDebug testDebugUnitTest assembleDebug
