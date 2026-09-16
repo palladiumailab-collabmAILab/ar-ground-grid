@@ -18,7 +18,8 @@
 
 - ARCoreはAndroid上で水平面検出、hit test、Anchorを提供する。
 - ARCoreのワールド座標はメートル単位で扱えるため、0.1 m間隔の幾何を生成してAnchor配下に描画できる。
-- SceneView 4.36.0はCompose向けの`ARSceneView`、`AnchorNode`、`LineNode`を提供する。
+- SceneView 4.35.0はMaven Centralで取得可能な公開版で、Compose向け`ARSceneView`、`AnchorNode`、基本3Dプリミティブを提供する。
+- 2026-09-16時点でSceneViewのmainドキュメントには4.36.0の記載があるが、Maven Centralにはまだ4.36.0が公開されていないため、ビルド可能性を優先して4.35.0へ固定する。
 - Android MVPはKotlin + Jetpack Compose + ARCore + SceneViewで構成する。
 - グリッド線座標の生成は純粋Kotlinへ分離し、将来のiOS移植時に同じ仕様を再利用する。
 
@@ -34,7 +35,7 @@
 |---|---|---|---|
 | AR追跡ドリフト | VIOベースのARは環境条件に依存 | グリッドが実物からずれる | 1 m基準長で複数環境を実測する |
 | 平面誤検出・未検出 | ARCoreは画像特徴と端末運動から平面を推定 | 配置不能・誤配置 | horizontal upward facing + polygon内hitのみ許可 |
-| SceneView依存変更 | 外部ライブラリ | ビルド破損 | バージョン固定、AR層を局所化 |
+| SceneView依存変更 | 外部ライブラリ | ビルド破損 | Maven Central公開版へバージョン固定、AR層を局所化 |
 | 線数増加による描画負荷 | 10 cm間隔では4 m四方で82本 | FPS低下の可能性 | MVPでは82本に固定し実機確認 |
 
 ## Sources
@@ -43,5 +44,5 @@
 - ARCore enable AR: https://developers.google.com/ar/develop/java/enable-arcore
 - ARCore supported devices: https://developers.google.com/ar/devices
 - SceneView: https://github.com/SceneView/sceneview
-- SceneView node reference: https://github.com/sceneview/sceneview/blob/main/docs/docs/nodes.md
+- SceneView Maven Central: https://central.sonatype.com/artifact/io.github.sceneview/arsceneview
 - Android Compose BOM: https://developer.android.com/develop/ui/compose/bom
