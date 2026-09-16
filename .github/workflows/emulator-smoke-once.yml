@@ -48,8 +48,7 @@ jobs:
           echo no | avdmanager create avd \
             --force \
             --name "$AVD_NAME" \
-            --package "system-images;android-35;google_apis;x86_64" \
-            --device "pixel_6"
+            --package "system-images;android-35;google_apis;x86_64"
           {
             echo "hw.camera.back=virtualscene"
             echo "hw.camera.front=emulated"
@@ -98,14 +97,14 @@ jobs:
             if printf '%s' "$ui" | grep -q 'ARを開始できません'; then
               echo "ARCore session failed"
               printf '%s\n' "$ui"
-              adb logcat -d | tail -n 500
+              timeout 10 adb logcat -d | tail -n 500 || true
               exit 1
             fi
           done
           if [ "$ready" -ne 1 ]; then
             echo "Timed out waiting for AR tracking + horizontal plane"
             adb shell cat /sdcard/ar-grid-ui.xml || true
-            adb logcat -d | tail -n 500
+            timeout 10 adb logcat -d | tail -n 500 || true
             exit 1
           fi
 
@@ -143,4 +142,4 @@ jobs:
         if: failure()
         run: |
           cat /tmp/ar-ground-grid-emulator.log || true
-          adb logcat -d | tail -n 1000 || true
+          timeout 10 adb logcat -d | tail -n 1000 || true
