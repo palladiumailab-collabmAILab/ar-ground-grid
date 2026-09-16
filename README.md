@@ -42,6 +42,41 @@ docker build -t ar-ground-grid .
 docker run --rm -v "$PWD:/workspace" -w /workspace ar-ground-grid
 ```
 
+## BlueStacks smoke test
+
+BlueStacks 5では、実寸精度ではなくAndroidアプリとしての起動・権限処理・AR初期化失敗時の生存性をADBで確認する。
+
+1. BlueStacks 5を起動する。
+2. `Settings > Advanced > Android Debug Bridge`をONにする。
+3. debug APKを用意する。ローカルbuildなら:
+
+```powershell
+.\gradlew.bat assembleDebug
+```
+
+4. PowerShellから実行する。
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\bluestacks-smoke.ps1
+```
+
+APKを別の場所に置いた場合:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\bluestacks-smoke.ps1 -ApkPath C:\path\to\app-debug.apk
+```
+
+複数のADB deviceがある場合は`-Serial`を指定する。
+
+スクリプトは以下を確認する。
+
+- APK install
+- CAMERA未許可時のアプリUI
+- CAMERA付与後もprocessが生存すること
+- AR開始状態、またはAR初期化失敗が画面上で確認可能であること
+
+BlueStacksをARCore精度評価には使用しない。平面検出、Anchorの実世界固定、1 m / 3 mの実寸精度、driftは実Android端末で#7を実施する。
+
 ## Device validation
 
 GitHub Actions成功時にdebug APKを`ar-ground-grid-debug-apk` artifactとして7日間保持する。実機評価ではこのAPKまたはローカルbuildの`app-debug.apk`を使用する。
