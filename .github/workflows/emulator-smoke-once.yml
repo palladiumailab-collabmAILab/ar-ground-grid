@@ -10,7 +10,6 @@ jobs:
     timeout-minutes: 30
     env:
       AVD_NAME: ar-ground-grid-ci
-      ANDROID_AVD_HOME: ${{ runner.temp }}/android-avd
       APP_ID: com.palladiumailab.argroundgrid
       ARCORE_URL: https://github.com/google-ar/arcore-android-sdk/releases/download/1.54.0/Google_Play_Services_for_AR_1.54.0_x86_for_emulator.apk
       ARCORE_SHA256: 311053605c873be5022a01a96566c9cae2fbcdcce3fc81fa56697d089cac70b6
@@ -29,6 +28,9 @@ jobs:
           packages: platform-tools
 
       - uses: gradle/actions/setup-gradle@v4
+
+      - name: Configure emulator paths
+        run: echo "ANDROID_AVD_HOME=$RUNNER_TEMP/android-avd" >> "$GITHUB_ENV"
 
       - name: Enable KVM
         run: sudo chmod 666 /dev/kvm || true
