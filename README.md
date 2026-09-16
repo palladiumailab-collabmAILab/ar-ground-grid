@@ -1,39 +1,53 @@
-# hoge
+# AR Ground Grid
 
-新しいアプリの構想を整理し、調査・要件定義を経て実装可否を判断するためのプライベートリポジトリ。
+Androidカメラ越しの床・地面に、実世界スケールのグリッドを重畳するARアプリ。
 
-`codex-dev-harness` の共通開発原則を適用する。現時点は Discovery フェーズのため、実装用の Docker / Ruff / GitHub Actions はまだ導入せず、実行コードを追加する段階でプロジェクト構成に合わせて導入する。
+## MVP
 
-## 進め方
+- Android native: Kotlin + Jetpack Compose
+- AR: Google ARCore
+- Rendering adapter: SceneView 4.36.0 (ARCore + Filament)
+- 水平面をタップして4 m × 4 mグリッドを配置
+- 小グリッド: 10 cm
+- 主線: 1 m
+- リセットして再配置
+- 初期MVPでは計測精度を保証せず、1 m基準長で実機評価する
 
-1. `docs/specs/product.md` で解決したい課題、対象ユーザー、価値、成功条件を定義する
-2. `docs/research.md` に既存サービス、技術、根拠を記録する
-3. `docs/specs/requirements.md` に MVP、機能要件、非機能要件、受入条件を落とす
-4. 重要な判断は `docs/decisions.md` に残す
-5. 実装に進む段階で Issue に分解し、必要な品質ゲートを追加する
+## Architecture
 
-## 現在の状態
+- `app/src/main/java/.../grid/` — Android/ARCore非依存のメートル単位グリッド幾何
+- `app/src/main/java/.../ui/` — ARCore/SceneViewとの接続とCompose UI
+- `docs/specs/` — 現行仕様の正本
+- `docs/research.md` — 技術調査
+- `docs/decisions.md` — 設計判断
 
-**Phase: Discovery**
+将来のiPhone対応では、グリッド仕様・幾何を維持し、AR層をARKit/RealityKit側へ置き換える。
 
-まだアプリ案は確定していない。最初のゴールは、解く価値のある課題と検証可能な成功条件を定義すること。
+## Build
 
-## Documents
+Android Studioでプロジェクトを開くか、Dockerで再現可能なビルドを実行する。
 
-- [Specifications](docs/specs/README.md)
-- [Product](docs/specs/product.md)
-- [Requirements](docs/specs/requirements.md)
-- [Research](docs/research.md)
-- [Decisions](docs/decisions.md)
-- [Agent rules](AGENTS.md)
+```bash
+docker build -t ar-ground-grid .
+docker run --rm -v "$PWD:/workspace" -w /workspace ar-ground-grid
+```
 
-## Harness baseline
+Dockerを使わない場合は JDK 17+、Android SDK 36、Gradle 9.5.0 が必要。
 
-実装フェーズに入ったら、対象技術に応じて以下を適用する。
+```bash
+gradle --no-daemon testDebugUnitTest assembleDebug
+```
 
-- Docker による再現可能な開発・検証経路
-- Python を含む場合は Ruff による lint / format
-- GitHub Actions による PR / default branch の遠隔品質ゲート
-- テスト、型チェック、build、repository invariant、domain validator のうち必要なもの
+## Device requirements
 
-技術スタック、framework、DB、service topology は要件に基づいて決め、ハーネスから一律には固定しない。
+AR Requiredアプリのため、ARCore対応Android端末とGoogle Play Services for ARが必要。`minSdk = 24`。
+
+## Current phase
+
+**Phase: Android MVP implementation**
+
+実装後の完了条件は `docs/specs/requirements.md` を参照する。特に、実機で1 m基準長との誤差を測定するまでは「計測精度確認済み」としない。
+
+## Harness
+
+`codex-dev-harness` の共通開発原則を適用する。GitHub ActionsでJVM単体テストとdebug buildを実行する。
