@@ -19,6 +19,14 @@
 - 秘密情報、秘密鍵、トークン、不要な個人情報を出力・コミット・外部送信しない。
 - 依頼のないデプロイ、外部書き込み、課金、データ削除、権限変更、force push を行わない。
 
+## AR Ground Grid固有の参照順序
+
+- 現在の実装順序・decision gateは `docs/roadmap.md` を確認する。
+- 技術背景・先行技術・代替方式は `docs/reference/` を参照する。Issue本文やコメントを通常の実装判断の正本にしない。
+- 測定UI、snapping/reticle、depth補正、3D fitting、object annotation等を追加する前に `docs/reference/japan-fto-guardrails.md` の再FTOトリガーを確認する。
+- 長期利用する調査結果はIssueコメントだけに残さず、根拠と調査時点を付けて `docs/reference/` へ整理する。
+- #7の実機評価より前に、custom SLAM / VIO / SfM / dense depth、scale calibration、外部metric anchorを先回り実装しない。
+
 ## 実装フェーズに入った場合の基準
 
 - 実行可能なソフトウェアは Docker で再現可能な開発・検証経路を持たせる。ホストのみで再現できる状態を完成扱いしない。
@@ -31,7 +39,9 @@
 ## Source of truth
 
 - 現行仕様: `docs/specs/`
-- 調査: `docs/research.md`
+- 実装順序・decision gate: `docs/roadmap.md`
+- 技術reference: `docs/reference/`
+- 調査作業メモ: `docs/research.md`
 - 意思決定: `docs/decisions.md`
 - 実作業: GitHub Issues
 
@@ -40,7 +50,7 @@ Issue、タスク計画、調査メモは現在仕様の代替にしない。
 ## 標準ワークフロー
 
 1. 目的、制約、受け入れ条件、変更対象を短く整理する。
-2. 関連する `docs/specs/`、調査資料、コード、テストを必要な範囲で読む。
+2. 関連する `docs/specs/`、`docs/roadmap.md`、必要な `docs/reference/`、コード、テストを読む。
 3. 最小の変更を行う。
 4. 変更に比例したローカル検証を行う。
 5. GitHubへ反映した実装変更では、対象 commit / PR の GitHub Actions 結果を確認する。
