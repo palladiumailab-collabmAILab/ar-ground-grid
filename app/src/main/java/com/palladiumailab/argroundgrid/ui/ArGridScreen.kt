@@ -110,8 +110,8 @@ private fun ArGridContent() {
                 if (nextLabel != trackingLabel) trackingLabel = nextLabel
             },
             onGestureListener = rememberOnGestureListener(
-                onSingleTapConfirmed = { event, node ->
-                    if (anchor != null || node != null) return@rememberOnGestureListener
+                onSingleTapConfirmed = { event, _ ->
+                    if (anchor != null) return@rememberOnGestureListener
                     val frame = latestFrame.get() ?: return@rememberOnGestureListener
                     val hit = frame.hitTest(event).firstOrNull { result ->
                         val trackable = result.trackable
