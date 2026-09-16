@@ -1,5 +1,9 @@
 package com.palladiumailab.argroundgrid.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,6 +15,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -18,7 +23,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import com.google.ar.core.Anchor
 import com.google.ar.core.Config
 import com.google.ar.core.Frame
@@ -28,12 +35,53 @@ import com.palladiumailab.argroundgrid.grid.GridGeometry
 import io.github.sceneview.ar.ARSceneView
 import io.github.sceneview.ar.node.AnchorNode
 import io.github.sceneview.math.Position
-import io.github.sceneview.node.LineNode
+import io.github.sceneview.node.TubeNode
 import io.github.sceneview.rememberOnGestureListener
 import java.util.concurrent.atomic.AtomicReference
 
 @Composable
 fun ArGridScreen() {
+    val context = LocalContext.current
+    var hasCameraPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
+                PackageManager.PERMISSION_GRANTED,
+        )
+    }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        hasCameraPermission = granted
+    }
+
+    LaunchedEffect(Unit) {
+        if (!hasCameraPermission) permissionLauncher.launch(Manifest.permission.CAMERA)
+    }
+
+    if (!hasCameraPermission) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.padding(24.dp),
+            ) {
+                Text("AR表示にはカメラ権限が必要です")
+                Button(onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) }) {
+                    Text("カメラを許可")
+                }
+            }
+        }
+        return
+    }
+
+    ArGridContent()
+}
+
+@Composable
+private fun ArGridContent() {
     val latestFrame = remember { AtomicReference<Frame?>(null) }
     val gridLines = remember { GridGeometry.generate() }
     var anchor by remember { mutableStateOf<Anchor?>(null) }
@@ -74,18 +122,23 @@ fun ArGridScreen() {
             ),
         ) {
             val minorMaterial = remember(materialLoader) {
-                materialLoader.createColorInstance(Color(0.15f, 0.85f, 1f, 0.72f), unlit = true)
+                materialLoader.createUnlitColorInstance(Color(0.15f, 0.85f, 1f, 0.78f))
             }
             val majorMaterial = remember(materialLoader) {
-                materialLoader.createColorInstance(Color(1f, 0.78f, 0.12f, 0.95f), unlit = true)
+                materialLoader.createUnlitColorInstance(Color(1f, 0.78f, 0.12f, 0.98f))
             }
 
             anchor?.let { placedAnchor ->
                 AnchorNode(anchor = placedAnchor) {
                     gridLines.forEach { line ->
-                        LineNode(
-                            start = Position(line.startX, 0.002f, line.startZ),
-                            end = Position(line.endX, 0.002f, line.endZ),
+                        TubeNode(
+                            points = listOf(
+                                Position(line.startX, 0.004f, line.startZ),
+                                Position(line.endX, 0.004f, line.endZ),
+                            ),
+                            radius = if (line.isMajor) 0.006f else 0.003f,
+                            radialSegments = 4,
+                            caps = false,
                             materialInstance = if (line.isMajor) majorMaterial else minorMaterial,
                         )
                     }
