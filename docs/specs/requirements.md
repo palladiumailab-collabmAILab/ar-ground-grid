@@ -46,7 +46,7 @@
 | NFR-002 | アーキテクチャ | グリッド幾何計算はAndroid/ARCore非依存のKotlinコードに分離する |
 | NFR-003 | テスト | グリッド本数、座標、主線判定をJVM単体テストで検証する |
 | NFR-004 | CI | pull request / main pushでunit testとAndroid debug buildを実行する |
-| NFR-005 | 再現性 | JDK 17 + Gradle Wrapperでビルド手順を固定する |
+| NFR-005 | 再現性 | Gradle 9.5.0をCIとDockerで固定し、同じbuild/testコマンドを使う |
 | NFR-006 | 実測検証 | 1 m基準長との誤差を複数条件で記録できる評価手順を持つ |
 
 ## Data / external dependencies
