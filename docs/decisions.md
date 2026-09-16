@@ -17,8 +17,8 @@
 - Status: Accepted
 - Context: ARCore自体は追跡を提供するが、カメラ背景と3D描画の実装が別途必要。
 - Options: ARCore + OpenGL直接実装 / SceneView / Unity
-- Decision: MVPではSceneView 4.36.0をARCore + Filament描画アダプタとして使用する。
-- Evidence: SceneViewはCompose向け`ARSceneView`、`AnchorNode`、`LineNode`を提供し、ARCore/Filamentの定型実装を削減できる。
+- Decision: MVPではMaven Centralで公開済みのSceneView 4.35.0をARCore + Filament描画アダプタとして使用する。
+- Evidence: SceneViewはCompose向け`ARSceneView`、`AnchorNode`、基本3Dプリミティブを提供し、ARCore/Filamentの定型実装を削減できる。2026-09-16時点では公式mainドキュメントの4.36.0表記に対し、Maven Central公開版は4.35.0。
 - Consequences: サードパーティ依存となるため、SceneView型をUI/AR層から外へ漏らさず、グリッド幾何ロジックは純粋Kotlinに保つ。
 - Revisit when: SceneViewの更新停止、重大な互換性問題、または精度・性能上の制約が確認された時。
 
