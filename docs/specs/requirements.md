@@ -45,8 +45,8 @@
 | NFR-001 | Android要件 | minSdk 24、compileSdk 37、targetSdk 36 |
 | NFR-002 | アーキテクチャ | グリッド幾何計算はAndroid/ARCore非依存のKotlinコードに分離する |
 | NFR-003 | テスト | グリッド本数、座標、主線判定をJVM単体テストで検証する |
-| NFR-004 | CI | pull request / main pushでunit testとAndroid debug buildを実行する |
-| NFR-005 | 再現性 | Gradle 9.5.0をCIとDockerで固定し、同じbuild/testコマンドを使う |
+| NFR-004 | CI | pull request / main pushでAndroid Lint、unit test、Android debug buildを実行する |
+| NFR-005 | 再現性 | Gradle 9.5.0をCIとDockerで固定し、`lintDebug testDebugUnitTest assembleDebug`を同一品質ゲートとして実行する |
 | NFR-006 | 実測検証 | 1 m基準長との誤差を複数条件で記録できる評価手順を持つ |
 
 ## Data / external dependencies
@@ -63,6 +63,6 @@
 - [ ] 水平面へのタップで4 m × 4 mグリッドを配置できる。
 - [ ] リセット後に再配置できる。
 - [ ] 純粋Kotlinのグリッド生成テストが通る。
-- [ ] GitHub Actionsでunit testとdebug buildが通る。
+- [ ] GitHub ActionsでAndroid Lint、unit test、debug buildが通る。
 - [ ] 1 m基準長を用いた実機精度評価結果を記録する。
 - [ ] 既知の重大な失敗条件が整理されている。
