@@ -8,4 +8,4 @@ RUN yes | sdkmanager "platforms;android-37" \
     && rm /tmp/gradle.zip
 
 WORKDIR /workspace
-CMD ["gradle", "--no-daemon", "testDebugUnitTest", "assembleDebug"]
+CMD ["gradle", "--no-daemon", "lintDebug", "testDebugUnitTest", "assembleDebug"]
