@@ -1,0 +1,142 @@
+name: Emulator Smoke Once
+
+on:
+  push:
+    branches: [feat/ar-ground-grid-android-mvp]
+
+jobs:
+  arcore-emulator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      AVD_NAME: ar-ground-grid-ci
+      APP_ID: com.palladiumailab.argroundgrid
+      ARCORE_URL: https://github.com/google-ar/arcore-android-sdk/releases/download/1.54.0/Google_Play_Services_for_AR_1.54.0_x86_for_emulator.apk
+      ARCORE_SHA256: 311053605c873be5022a01a96566c9cae2fbcdcce3fc81fa56697d089cac70b6
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Enable KVM
+        run: sudo chmod 666 /dev/kvm || true
+
+      - name: Install Android emulator packages
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager \
+            "platforms;android-37.0" \
+            "platform-tools" \
+            "emulator" \
+            "system-images;android-35;google_apis;x86_64"
+
+      - name: Build debug APK
+        run: ./gradlew --no-daemon assembleDebug
+
+      - name: Create AR-capable AVD
+        run: |
+          echo no | avdmanager create avd \
+            --force \
+            --name "$AVD_NAME" \
+            --package "system-images;android-35;google_apis;x86_64" \
+            --device "pixel_6"
+          {
+            echo "hw.camera.back=virtualscene"
+            echo "hw.camera.front=emulated"
+          } >> "$HOME/.android/avd/$AVD_NAME.avd/config.ini"
+
+      - name: Boot emulator
+        run: |
+          nohup emulator \
+            -avd "$AVD_NAME" \
+            -no-window \
+            -no-snapshot \
+            -noaudio \
+            -no-boot-anim \
+            -gpu swiftshader_indirect \
+            > /tmp/ar-ground-grid-emulator.log 2>&1 &
+          adb wait-for-device
+          timeout 300 bash -c 'until [ "$(adb shell getprop sys.boot_completed | tr -d "\r")" = "1" ]; do sleep 5; done'
+          adb shell settings put global window_animation_scale 0
+          adb shell settings put global transition_animation_scale 0
+          adb shell settings put global animator_duration_scale 0
+
+      - name: Install verified Google Play Services for AR
+        run: |
+          curl --fail --location --retry 3 "$ARCORE_URL" -o /tmp/arcore-emulator.apk
+          echo "$ARCORE_SHA256  /tmp/arcore-emulator.apk" | sha256sum --check
+          adb install -r /tmp/arcore-emulator.apk
+
+      - name: Install and launch AR Ground Grid
+        run: |
+          adb install -r app/build/outputs/apk/debug/app-debug.apk
+          adb shell pm grant "$APP_ID" android.permission.CAMERA
+          adb shell am force-stop "$APP_ID"
+          adb shell am start -n "$APP_ID/.MainActivity"
+
+      - name: Wait for tracking and horizontal plane
+        run: |
+          ready=0
+          for attempt in $(seq 1 24); do
+            sleep 5
+            adb shell uiautomator dump /sdcard/ar-grid-ui.xml >/dev/null || true
+            ui="$(adb shell cat /sdcard/ar-grid-ui.xml 2>/dev/null || true)"
+            if printf '%s' "$ui" | grep -q '床をタップしてグリッドを配置'; then
+              ready=1
+              break
+            fi
+            if printf '%s' "$ui" | grep -q 'ARを開始できません'; then
+              echo "ARCore session failed"
+              printf '%s\n' "$ui"
+              adb logcat -d | tail -n 500
+              exit 1
+            fi
+          done
+          if [ "$ready" -ne 1 ]; then
+            echo "Timed out waiting for AR tracking + horizontal plane"
+            adb shell cat /sdcard/ar-grid-ui.xml || true
+            adb logcat -d | tail -n 500
+            exit 1
+          fi
+
+      - name: Attempt grid placement
+        run: |
+          size="$(adb shell wm size | tr -d '\r' | grep -oE '[0-9]+x[0-9]+' | tail -n 1)"
+          width="${size%x*}"
+          height="${size#*x}"
+          placed=0
+
+          for y_pct in 45 55 65 75; do
+            for x_pct in 40 50 60; do
+              x=$((width * x_pct / 100))
+              y=$((height * y_pct / 100))
+              adb shell input tap "$x" "$y"
+              sleep 2
+              adb shell uiautomator dump /sdcard/ar-grid-ui.xml >/dev/null || true
+              ui="$(adb shell cat /sdcard/ar-grid-ui.xml 2>/dev/null || true)"
+              if printf '%s' "$ui" | grep -q '配置済み'; then
+                placed=1
+                break 2
+              fi
+            done
+          done
+
+          if [ "$placed" -ne 1 ]; then
+            echo "Horizontal plane was detected, but scripted screen taps did not place the grid."
+            echo "This is retained as emulator diagnostic rather than metric evidence."
+            adb shell cat /sdcard/ar-grid-ui.xml || true
+          else
+            echo "Grid placement succeeded in ARCore VirtualScene."
+          fi
+
+      - name: Diagnostics on failure
+        if: failure()
+        run: |
+          cat /tmp/ar-ground-grid-emulator.log || true
+          adb logcat -d | tail -n 1000 || true
