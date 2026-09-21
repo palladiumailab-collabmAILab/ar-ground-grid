@@ -1,39 +1,59 @@
-# hoge
+# AR Ground Grid
 
-新しいアプリの構想を整理し、調査・要件定義を経て実装可否を判断するためのプライベートリポジトリ。
+Androidカメラ越しの床・地面に、実世界スケールのグリッドを重畳するARアプリ。
 
-`codex-dev-harness` の共通開発原則を適用する。現時点は Discovery フェーズのため、実装用の Docker / Ruff / GitHub Actions はまだ導入せず、実行コードを追加する段階でプロジェクト構成に合わせて導入する。
+## MVP
 
-## 進め方
+- Kotlin + Jetpack Compose
+- Google ARCore + SceneView 4.35.0
+- 水平面をタップして4 m × 4 mグリッドを配置
+- 小グリッド10 cm、主線1 m、リセットして再配置
+- 初期MVPでは計測精度を保証せず、実機評価で検証する
 
-1. `docs/specs/product.md` で解決したい課題、対象ユーザー、価値、成功条件を定義する
-2. `docs/research.md` に既存サービス、技術、根拠を記録する
-3. `docs/specs/requirements.md` に MVP、機能要件、非機能要件、受入条件を落とす
-4. 重要な判断は `docs/decisions.md` に残す
-5. 実装に進む段階で Issue に分解し、必要な品質ゲートを追加する
+## Architecture
 
-## 現在の状態
+- `app/src/main/.../grid/` — Android/ARCore非依存のメートル単位グリッド幾何
+- `app/src/main/.../ui/` — ARCore/SceneView接続とCompose UI
+- `docs/specs/` — 現行仕様の正本
+- `docs/reference/` — 技術・FTOリファレンス
+- `docs/roadmap.md` — 実装順序とdecision gate
+- `docs/evaluation/` — 実機評価手順とtrial template
 
-**Phase: Discovery**
+## Build
 
-まだアプリ案は確定していない。最初のゴールは、解く価値のある課題と検証可能な成功条件を定義すること。
+repository-owned Gradle Wrapper 9.5.0を標準entrypointとする。JDK 17+とAndroid SDK 37が必要。
+
+```bash
+./gradlew --no-daemon lintDebug testDebugUnitTest assembleDebug
+```
+
+Gradle distributionとWrapper JARのSHA-256を固定し、GitHub ActionsとDockerも同じWrapper経路を使う。
+
+```bash
+docker build -t ar-ground-grid .
+docker run --rm -v "$PWD:/workspace" -w /workspace ar-ground-grid
+```
+
+## Validation boundaries
+
+- BlueStacks smoke testは起動、権限処理、AR初期化失敗の観測用であり、実寸精度の根拠にしない。
+- Official Android EmulatorのVirtualSceneはARCoreのtracking/plane/placement診断用であり、実寸精度の根拠にしない。
+- 1 m / 3 mのaccuracy、drift、tracking-loss recoveryは実Android端末で #7 として評価する。
+- 実機評価が終わるまで「計測精度確認済み」と主張しない。
 
 ## Documents
 
 - [Specifications](docs/specs/README.md)
 - [Product](docs/specs/product.md)
 - [Requirements](docs/specs/requirements.md)
+- [Roadmap](docs/roadmap.md)
+- [Evaluation](docs/evaluation/README.md)
 - [Research](docs/research.md)
 - [Decisions](docs/decisions.md)
 - [Agent rules](AGENTS.md)
 
-## Harness baseline
+## Current phase
 
-実装フェーズに入ったら、対象技術に応じて以下を適用する。
+**Phase: Android MVP implementation**
 
-- Docker による再現可能な開発・検証経路
-- Python を含む場合は Ruff による lint / format
-- GitHub Actions による PR / default branch の遠隔品質ゲート
-- テスト、型チェック、build、repository invariant、domain validator のうち必要なもの
-
-技術スタック、framework、DB、service topology は要件に基づいて決め、ハーネスから一律には固定しない。
+Android MVPの実装・CI・Docker経路はこのリポジトリで管理し、merge後に #7 の実機評価へ進む。MVP成立前にcustom SLAM、custom depth、音響測距、cloud/backendを追加しない。

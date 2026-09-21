@@ -1,6 +1,6 @@
 # AR Ground Grid roadmap
 
-Updated: 2026-09-16
+Updated: 2026-09-21
 
 ## Objective
 
@@ -10,22 +10,22 @@ Androidで実寸スケールの地面グリッドMVPを成立させ、実機デ�
 
 | Work | Role | Status / gate |
 |---|---|---|
-| #2 Android MVP | 実装本線 | CI + 実機起動が次のgate |
+| #2 Android MVP | 実装本線 | main向けMVP PRのCI success、merge後に実機起動が次のgate |
 | #3 prior art / Japan FTO | 技術調査 | completed |
 | #4 measurement plan | 検証計画 | docs PR |
 | #5 alternative ranging | 研究バックログ | 本線から分離 |
 | #6 acoustic ranging | 条件付きPoC | Draft, blocked by #7 |
-| #7 real-device evaluation | 実測 | blocked by #2 |
+| #7 real-device evaluation | 実測 | blocked until #2 is merged into main |
 
 ## Phase A — Documentation baseline
 
 目的: Issue本文・コメントに埋もれた調査結果を永続リファレンスへ移す。
 
-- [ ] `docs/reference/ar-metric-measurement.md`
-- [ ] `docs/reference/japan-fto-guardrails.md`
-- [ ] `docs/reference/alternative-ranging.md`
-- [ ] #4のvalidation planからreferenceを参照
-- [ ] #1のwork mapとdependencyをこのroadmapへ同期
+- [x] `docs/reference/ar-metric-measurement.md`
+- [x] `docs/reference/japan-fto-guardrails.md`
+- [x] `docs/reference/alternative-ranging.md`
+- [x] #4のvalidation planからreferenceを参照
+- [x] #1のwork mapとdependencyをこのroadmapへ同期
 
 Exit:
 
@@ -38,14 +38,14 @@ Exit:
 
 ### Required
 
-- [ ] Android Lint
-- [ ] JVM unit tests
-- [ ] debug build
-- [ ] Gradle Wrapperをrepositoryへ追加
-- [ ] CI / Docker / READMEの標準コマンドを`./gradlew`へ統一
-- [ ] Gradle distribution checksumを固定
+- [x] Android Lint
+- [x] JVM unit tests
+- [x] debug build
+- [x] Gradle Wrapperをrepositoryへ追加
+- [x] CI / Docker / READMEの標準コマンドを`./gradlew`へ統一
+- [x] Gradle distribution checksumを固定
 - [ ] 実Android端末で起動
-- [ ] camera permission / ARCore unavailable時のfailureが観測可能
+- [x] camera permission / ARCore unavailable時のfailureが観測可能
 
 ### Architecture boundary
 
@@ -60,6 +60,8 @@ Exit:
 - custom SLAM / VIO / SfM
 - custom depth
 - acoustic ranging
+
+実装PRのCIは上記ゲートを通過済み。mainへのmerge後に実機起動を確認してPhase Bを完了する。
 
 Exit:
 
