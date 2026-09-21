@@ -1,69 +1,49 @@
-# AGENTS.md
+# Codex Software Development Harness
 
-このリポジトリは、新規アプリの構想・調査・要件定義を行い、必要に応じて実装へ進むためのワークスペースである。
+システム・開発者指示、ユーザーの明示依頼、現在地に近い `AGENTS.override.md` / `AGENTS.md` を優先します。このファイルは常時読む最小ルータです。
 
-`codex-dev-harness` の共通原則を適用しつつ、このリポジトリ固有の Discovery 運用を優先する。
+## 正本
 
-## 不変条件
+- 共通ハーネスの正本は `palladiumailab-collabmAILab/codex-dev-harness`。
+- 下流へコピーした共通ファイルは upstream-managed とし、プロジェクト固有規則は `AGENTS.project.md` 等へ分離する。
+- 共通規則の変更は正本で検証してから pinned revision で下流へ同期する。
 
-- 依頼の目的、変更範囲、受け入れ条件を先に確認する。実装方針または完了判定を左右する曖昧さが残る場合は勝手に補完せず確認する。
-- 事実・外部根拠・仮説を混同しない。調査結果には可能な限り一次情報または信頼できる出典を付ける。
-- 長期に有効な製品・システム仕様は `docs/specs/` を正本とする。関連仕様がある変更では先に参照する。
-- 実装と仕様が矛盾する場合は、黙ってどちらかへ寄せず矛盾を明示する。
-- 実装を始める前に、対象ユーザー、解決する課題、MVP、成功条件、受入条件を定義する。
-- テスト、lint、build、調査結果は受け入れ条件を裏づける証拠として扱い、それ自体をタスク完了とみなさない。
-- 依頼されていない機能、依存関係、外部連携、大規模リファクタリングを追加しない。
-- 変更は小さく目的単位に保ち、既存の構成、命名、依存関係、フォーマッタ、パッケージマネージャを尊重する。
-- 重要な判断と却下理由は `docs/decisions.md` に残す。
-- 未検証事項は断定せず、必要なら検証方法を明記する。
-- 秘密情報、秘密鍵、トークン、不要な個人情報を出力・コミット・外部送信しない。
-- 依頼のないデプロイ、外部書き込み、課金、データ削除、権限変更、force push を行わない。
+## モデルプロファイル
 
-## AR Ground Grid固有の参照順序
+実行中のモデルに対応するものを **1つだけ** 読みます。
 
-- 現在の実装順序・decision gateは `docs/roadmap.md` を確認する。
-- 技術背景・先行技術・代替方式は `docs/reference/` を参照する。Issue本文やコメントを通常の実装判断の正本にしない。
-- 測定UI、snapping/reticle、depth補正、3D fitting、object annotation等を追加する前に `docs/reference/japan-fto-guardrails.md` の再FTOトリガーを確認する。
-- 長期利用する調査結果はIssueコメントだけに残さず、根拠と調査時点を付けて `docs/reference/` へ整理する。
-- #7の実機評価より前に、custom SLAM / VIO / SfM / dense depth、scale calibration、外部metric anchorを先回り実装しない。
+- GPT-6 Astra: `profiles/astra/AGENTS.md`
+- GPT-5.6 Sol / Luna: `profiles/sol-luna/AGENTS.md`
+- その他: モデル固有プロファイルを推測で流用しない。
 
-## 実装フェーズに入った場合の基準
+## 共通不変条件
 
-- 実行可能なソフトウェアは Docker で再現可能な開発・検証経路を持たせる。ホストのみで再現できる状態を完成扱いしない。
-- Python を含む場合は Ruff を lint / format の標準品質ゲートとして使用する。
-- GitHubで管理する実行可能なソフトウェアでは GitHub Actions を標準の遠隔品質ゲートとする。
-- PR と default branch push で、適用範囲に応じて lint / format、テスト、型チェック、build、repository invariant、domain validator を実行する。
-- CI を通すためだけにテスト、評価器、閾値、検証範囲を弱めない。
-- 変更後は差分を再確認し、変更に比例したテスト、型チェック、lint、build、手動確認を行う。実行できない検証は理由を明記する。
+- 依頼された成果、明示制約、受け入れ条件を変更しない。
+- durable な仕様変更では、関連する正本仕様だけを先に確認する。
+- test / lint / build / 評価は証拠であり成果そのものではない。合格のためだけに条件や評価器を弱めない。
+- 最小の変更面に限定し、依頼外の機能・依存・大規模リファクタを追加しない。
+- 既存の未コミット変更を保持し、破壊的 reset / clean / force push を既定にしない。
+- 秘密情報を出力・コミット・外部送信しない。依頼のないデプロイ、課金、削除、権限変更、外部書込みを行わない。
+- 同じ情報を目的なく再読込せず、状態変化のない同一検証を反復しない。
 
-## Source of truth
+## 条件付き参照
 
-- 現行仕様: `docs/specs/`
-- 実装順序・decision gate: `docs/roadmap.md`
-- 技術reference: `docs/reference/`
-- 調査作業メモ: `docs/research.md`
-- 意思決定: `docs/decisions.md`
-- 実作業: GitHub Issues
+必要な項目だけ読みます。通常実装で `docs/project-baseline.md` 全体を先読みしません。
 
-Issue、タスク計画、調査メモは現在仕様の代替にしない。
+- 仕様の正本・仕様変更: `docs/baselines/specifications.md`
+- Docker / 再現環境を変更・追加: `docs/baselines/docker.md`
+- GitHub Actions / remote quality gate を変更・確認: `docs/baselines/github-ci.md`
+- Python lint / format / Ruff を変更・追加: `docs/baselines/python-ruff.md`
+- task contract / evaluation / optimization semantics を変更: `docs/harness-architecture.md`
+- セッション間 handoff が必要: `templates/codex-progress.md`
+- モデル別タスク依頼を組み立てる: `templates/task-prompts/`
 
-## 標準ワークフロー
+## Skill 発火条件
 
-1. 目的、制約、受け入れ条件、変更対象を短く整理する。
-2. 関連する `docs/specs/`、`docs/roadmap.md`、必要な `docs/reference/`、コード、テストを読む。
-3. 最小の変更を行う。
-4. 変更に比例したローカル検証を行う。
-5. GitHubへ反映した実装変更では、対象 commit / PR の GitHub Actions 結果を確認する。
-6. 各受け入れ条件を満たす証拠を確認し、変更内容、検証結果、残るリスクだけを報告する。
+- `repo-research`: 未知のrepoで複数モジュールを横断して入口・依存・実行経路を特定するとき。
+- `github-operations`: branch / commit / push / Issue / PR / CI / remote mutation を明示依頼されたとき。
+- `self-improvement`: baseline と評価基準を固定して agent / prompt / tool / workflow を反復比較するとき。
+- `long-running-work`: 通常の1実装パスで完了せず、複数の大きな段階またはセッション間handoffが必要なとき。
+- `reverse-engineering`: 許可された opaque / legacy / binary / protocol を互換性・移行・診断・防御目的で解析するとき。
 
-## モデルルーティング
-
-- 既定: `gpt-5.6-sol / medium` — 実装、設計、デバッグ、レビュー、最終統合。
-- 限定worker: `gpt-5.6-luna / max` — 候補抽出、機械的変換、限定探索、独立した読み取り中心の確認。
-- Luna/max で条件を満たせない、または局所探索を越える判断が必要なら、同じ失敗を反復せず証拠を短く引き継いで Sol/medium へ昇格する。
-
-## 検証の比例性
-
-- 可逆で影響の小さい変更では、実装をそのまま写すだけのテストを増やさない。
-- バグ修正、公開API、永続化、認証・認可、並行性、課金、セキュリティでは回帰を示す検証を優先する。
-- 同じ検証を再実行しても実装、成果物、判断材料が変わらない場合は進捗と数えない。
+該当する `SKILL.md` だけ読み、全skillを事前読込しません。
