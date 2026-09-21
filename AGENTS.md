@@ -1,69 +1,29 @@
-# AGENTS.md
+# Codex Software Development Harness
 
-このリポジトリは、新規アプリの構想・調査・要件定義を行い、必要に応じて実装へ進むためのワークスペースである。
+Shared rules are managed from `palladiumailab-collabmAILab/codex-dev-harness`; the pinned revision is recorded in `docs/harness-upstream.md`. Keep project-specific rules in `AGENTS.project.md` or explicitly project-specific skills/docs, and read `AGENTS.project.md` when present.
 
-`codex-dev-harness` の共通原則を適用しつつ、このリポジトリ固有の Discovery 運用を優先する。
+## Common invariants
 
-## 不変条件
+- Preserve the requested outcome, explicit constraints, and acceptance criteria.
+- Before changing durable product/system behavior, read the relevant `docs/specs/` or existing canonical requirement source; surface conflicts instead of silently choosing one side.
+- Treat tests, lint, builds, CI, evaluations, and inspections as evidence, not as substitutes for the requested outcome. Do not weaken checks merely to obtain a pass.
+- Keep changes minimal and preserve unrelated work. Do not default to destructive reset/clean/checkout or force push.
+- Never expose or commit secrets, private keys, tokens, or unnecessary personal data. Do not deploy, incur charges, delete data, change permissions, or write to external services unless explicitly authorized.
+- Read only the nearest instructions and the specifications, code, tests, and configuration needed for the task. Avoid purposeless repository-wide scans and large log dumps.
 
-- 依頼の目的、変更範囲、受け入れ条件を先に確認する。実装方針または完了判定を左右する曖昧さが残る場合は勝手に補完せず確認する。
-- 事実・外部根拠・仮説を混同しない。調査結果には可能な限り一次情報または信頼できる出典を付ける。
-- 長期に有効な製品・システム仕様は `docs/specs/` を正本とする。関連仕様がある変更では先に参照する。
-- 実装と仕様が矛盾する場合は、黙ってどちらかへ寄せず矛盾を明示する。
-- 実装を始める前に、対象ユーザー、解決する課題、MVP、成功条件、受入条件を定義する。
-- テスト、lint、build、調査結果は受け入れ条件を裏づける証拠として扱い、それ自体をタスク完了とみなさない。
-- 依頼されていない機能、依存関係、外部連携、大規模リファクタリングを追加しない。
-- 変更は小さく目的単位に保ち、既存の構成、命名、依存関係、フォーマッタ、パッケージマネージャを尊重する。
-- 重要な判断と却下理由は `docs/decisions.md` に残す。
-- 未検証事項は断定せず、必要なら検証方法を明記する。
-- 秘密情報、秘密鍵、トークン、不要な個人情報を出力・コミット・外部送信しない。
-- 依頼のないデプロイ、外部書き込み、課金、データ削除、権限変更、force push を行わない。
+## Read only when relevant
 
-## AR Ground Grid固有の参照順序
+- Docker / GitHub Actions / Python-Ruff / shared specification layout: `docs/project-baseline.md`
+- task contracts / evaluation / optimization semantics: `docs/harness-architecture.md`
+- explicit GitHub remote operations: `skills/github-operations/SKILL.md`
+- unfamiliar cross-module repository investigation: `skills/repo-research/SKILL.md`
+- evaluated iterative agent/workflow optimization: `skills/self-improvement/SKILL.md`
+- substantial multi-stage or multi-session handoff: `skills/long-running-work/SKILL.md`
 
-- 現在の実装順序・decision gateは `docs/roadmap.md` を確認する。
-- 技術背景・先行技術・代替方式は `docs/reference/` を参照する。Issue本文やコメントを通常の実装判断の正本にしない。
-- 測定UI、snapping/reticle、depth補正、3D fitting、object annotation等を追加する前に `docs/reference/japan-fto-guardrails.md` の再FTOトリガーを確認する。
-- 長期利用する調査結果はIssueコメントだけに残さず、根拠と調査時点を付けて `docs/reference/` へ整理する。
-- #7の実機評価より前に、custom SLAM / VIO / SfM / dense depth、scale calibration、外部metric anchorを先回り実装しない。
+## Model use
 
-## 実装フェーズに入った場合の基準
+- Default to `gpt-5.6-sol / medium` for implementation, architecture, debugging, review, and integration.
+- Use `gpt-5.6-luna / max` only for bounded extraction, mechanical transformation, limited exploration, or independent read-only checks.
+- Escalate to Sol when the work requires cross-cutting judgment or a bounded Luna attempt fails; do not repeat the same failed cheap path.
 
-- 実行可能なソフトウェアは Docker で再現可能な開発・検証経路を持たせる。ホストのみで再現できる状態を完成扱いしない。
-- Python を含む場合は Ruff を lint / format の標準品質ゲートとして使用する。
-- GitHubで管理する実行可能なソフトウェアでは GitHub Actions を標準の遠隔品質ゲートとする。
-- PR と default branch push で、適用範囲に応じて lint / format、テスト、型チェック、build、repository invariant、domain validator を実行する。
-- CI を通すためだけにテスト、評価器、閾値、検証範囲を弱めない。
-- 変更後は差分を再確認し、変更に比例したテスト、型チェック、lint、build、手動確認を行う。実行できない検証は理由を明記する。
-
-## Source of truth
-
-- 現行仕様: `docs/specs/`
-- 実装順序・decision gate: `docs/roadmap.md`
-- 技術reference: `docs/reference/`
-- 調査作業メモ: `docs/research.md`
-- 意思決定: `docs/decisions.md`
-- 実作業: GitHub Issues
-
-Issue、タスク計画、調査メモは現在仕様の代替にしない。
-
-## 標準ワークフロー
-
-1. 目的、制約、受け入れ条件、変更対象を短く整理する。
-2. 関連する `docs/specs/`、`docs/roadmap.md`、必要な `docs/reference/`、コード、テストを読む。
-3. 最小の変更を行う。
-4. 変更に比例したローカル検証を行う。
-5. GitHubへ反映した実装変更では、対象 commit / PR の GitHub Actions 結果を確認する。
-6. 各受け入れ条件を満たす証拠を確認し、変更内容、検証結果、残るリスクだけを報告する。
-
-## モデルルーティング
-
-- 既定: `gpt-5.6-sol / medium` — 実装、設計、デバッグ、レビュー、最終統合。
-- 限定worker: `gpt-5.6-luna / max` — 候補抽出、機械的変換、限定探索、独立した読み取り中心の確認。
-- Luna/max で条件を満たせない、または局所探索を越える判断が必要なら、同じ失敗を反復せず証拠を短く引き継いで Sol/medium へ昇格する。
-
-## 検証の比例性
-
-- 可逆で影響の小さい変更では、実装をそのまま写すだけのテストを増やさない。
-- バグ修正、公開API、永続化、認証・認可、並行性、課金、セキュリティでは回帰を示す検証を優先する。
-- 同じ検証を再実行しても実装、成果物、判断材料が変わらない場合は進捗と数えない。
+Shared files listed in `docs/harness-upstream.md` remain upstream-managed; change common rules in the canonical harness first.
